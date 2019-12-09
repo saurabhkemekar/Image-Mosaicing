@@ -3,7 +3,7 @@ import numpy as np
 img3 = 0
 import os
 os.chdir('/home/saurabh/PANORAMA/yosemite_test')
-def wanted_area(img):
+def required_img(img):
         gray =cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
         ret,thresh = cv2.threshold(gray,0,255,cv2.THRESH_BINARY)
         image,contour,h = cv2.findContours(thresh,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
@@ -42,7 +42,7 @@ for i in range(1,4):
         ''' This H  define  the homography train img to query image  '''
         img3 = cv2.warpPerspective(img2,H,(gray1.shape[1]+ gray2.shape[1],gray2.shape[0]))
         img3[0:gray1.shape[0],0:gray1.shape[1]] = img1
-        img3 = wanted_area(img3)
+        img3 = required_img(img3)
         cv2.imshow('img3', img3)
         cv2.waitKey(1)
 #cv2.imshow('warped_image',img3)
