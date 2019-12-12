@@ -52,8 +52,10 @@ noi = 5 # number of images
 img1 = cv2.imread(str(i) + '.jpeg')
 img1 = cv2.resize(img1, None, fx=0.5, fy=0.5, interpolation=cv2.INTER_CUBIC)
 hieght  = img1.shape[0] +50
-
-for i in range(1,noi):            
+img3 = img1.copy()
+for i in range(1,noi):
+        img3 = required_img(img1)
+        img1 = img3 
         img2 = cv2.imread(str(i + 1) + '.jpeg')
         img2 = cv2.resize(img2, None, fx=0.5, fy=0.5, interpolation=cv2.INTER_CUBIC)
         gray1 = cv2.cvtColor(img1,cv2.COLOR_BGR2GRAY)
