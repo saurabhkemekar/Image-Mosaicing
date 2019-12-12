@@ -3,11 +3,6 @@ import numpy as np
 import os
 os.chdir('/home/saurabh/PANORAMA/3')
 
-def point(approx):
-    for p in approx:
-        if p[0][1] ==0 and p[0][0] !=0:
-            return p
-
 def arrange_points(points):
     number = np.array([a[0] for a in points])
     x_cen = 0
@@ -35,7 +30,6 @@ def required_img(img):
     ret,thresh = cv2.threshold(gray,0,255,cv2.THRESH_BINARY)
     image,contour,h = cv2.findContours(thresh,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
     try:
-
         cnt =contour[0]
         epsilon = 0.1*cv2.arcLength(cnt,True)
         approx = cv2.approxPolyDP(cnt,epsilon,True)
@@ -54,24 +48,16 @@ def required_img(img):
     except Exception:
         return img
     return  img
-noi = 5
-l = []
-H_prev = np.ones((3,3))
-cap = cv2.VideoCapture()
-for i in range(1,noi):
-        print('hello')
-        if i == 1:
-            img1 = cv2.imread(str(i) + '.jpeg')
-            img1 = cv2.resize(img1, None, fx=0.5, fy=0.5, interpolation=cv2.INTER_CUBIC)
-            hieght  = img1.shape[0] +50
-        else:
-            img1 = img3
+noi = 5 # number of images
+img1 = cv2.imread(str(i) + '.jpeg')
+img1 = cv2.resize(img1, None, fx=0.5, fy=0.5, interpolation=cv2.INTER_CUBIC)
+hieght  = img1.shape[0] +50
+
+for i in range(1,noi):            
         img2 = cv2.imread(str(i + 1) + '.jpeg')
         img2 = cv2.resize(img2, None, fx=0.5, fy=0.5, interpolation=cv2.INTER_CUBIC)
         gray1 = cv2.cvtColor(img1,cv2.COLOR_BGR2GRAY)
         gray2 = cv2.cvtColor(img2,cv2.COLOR_BGR2GRAY)
-        r_i1 = img1.copy()
-        r_i2 = img2.copy()
         sift = cv2.xfeatures2d.SIFT_create()
         kp1,desc1 = sift.detectAndCompute(gray1,None)
         kp2,desc2 = sift.detectAndCompute(gray2,None)
@@ -87,18 +73,17 @@ for i in range(1,noi):
         good = good[:15]
         pt1 = np.float32([kp1[m.queryIdx].pt for m in good]).reshape(-1,1,2)
         pt2 = np.float32([kp2[m.trainIdx].pt for m in good]).reshape(-1,1,2)
-        H,mask = cv2.findHomography(pt1,pt2,cv2.RANSAC,ransacReprojThreshold=4.0)
-        print(H)
+        H,mask = cv2.findHomography(pt1,pt2,cv2.RANSAC,ransacReprojThreshold=4.0) # homography
         H = np.linalg.inv(H)
         img3 = cv2.warpPerspective(img2,H,(gray1.shape[1]+gray2.shape[1],hieght))
-        img4 = img3.copy()
         l.append(img4)
         img3[0:gray1.shape[0],0:gray1.shape[1]] = img1
         if noi-1!=i:
              img3 = required_img(img3)
+         img1 = img3
+       
 img3 = required_img(img3)
 cv2.imshow('warped_image',img3)
 cv2.imwrite('img.jpg',img3)
-print(len(l))
 cv2.waitKey(0)
 cv2.destroyAllWindows()
