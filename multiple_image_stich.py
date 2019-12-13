@@ -1,7 +1,5 @@
 import cv2
 import numpy as np
-import os
-os.chdir('/home/saurabh/PANORAMA/3')
 
 def arrange_points(points):
     number = np.array([a[0] for a in points])
@@ -58,13 +56,13 @@ for i in range(1,noi):
         img1 = img3 
         img2 = cv2.imread(str(i + 1) + '.jpeg')
         img2 = cv2.resize(img2, None, fx=0.5, fy=0.5, interpolation=cv2.INTER_CUBIC)
-        gray1 = cv2.cvtColor(img1,cv2.COLOR_BGR2GRAY)
+        gray1 = cv2.cvtColor(img1,cv2.COLOR_BGR2GRAY)# converting the image into grayscale 
         gray2 = cv2.cvtColor(img2,cv2.COLOR_BGR2GRAY)
-        sift = cv2.xfeatures2d.SIFT_create()
-        kp1,desc1 = sift.detectAndCompute(gray1,None)
+        sift = cv2.xfeatures2d.SIFT_create() # create the sift object
+        kp1,desc1 = sift.detectAndCompute(gray1,None)# returns the keypoint and descriptors 
         kp2,desc2 = sift.detectAndCompute(gray2,None)
-        bf = cv2.BFMatcher(crossCheck=False)
-        matches = bf.knnMatch(desc1,desc2,k=2)
+        bf = cv2.BFMatcher(crossCheck=False)# create the Dmatch object 
+        matches = bf.knnMatch(desc1,desc2,k=2)# finds the match betweeen two images
         good = []
         pt1 = []
         pt2 = []
@@ -72,17 +70,15 @@ for i in range(1,noi):
             if m.distance < 0.7*n.distance:
                 good.append(m)
         good = sorted(good,key = lambda x:x.distance)
-        good = good[:15]
-        pt1 = np.float32([kp1[m.queryIdx].pt for m in good]).reshape(-1,1,2)
-        pt2 = np.float32([kp2[m.trainIdx].pt for m in good]).reshape(-1,1,2)
+        good = good[:15] # taking only the best 15 matches for finding the homography
+        pt1 = np.float32([kp1[m.queryIdx].pt for m in good]).reshape(-1,1,2) # query idx is index of pixel in stiching  image
+        pt2 = np.float32([kp2[m.trainIdx].pt for m in good]).reshape(-1,1,2) # train idx is index of pixel in reference image
         H,mask = cv2.findHomography(pt1,pt2,cv2.RANSAC,ransacReprojThreshold=4.0) # homography
         H = np.linalg.inv(H)
         img3 = cv2.warpPerspective(img2,H,(gray1.shape[1]+gray2.shape[1],hieght))
-        l.append(img4)
         img3[0:gray1.shape[0],0:gray1.shape[1]] = img1
         if noi-1!=i:
              img3 = required_img(img3)
-         img1 = img3
        
 img3 = required_img(img3)
 cv2.imshow('warped_image',img3)
