@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-def arrange_points(points):
+def arrange_points(points): # arrange the corner in specific order
     number = np.array([a[0] for a in points])
     x_cen = 0
     y_cen = 0
@@ -23,7 +23,7 @@ def arrange_points(points):
     points = np.array(sorted_x)
     return  points
 
-def required_img(img):
+def required_img(img): # this function  remove the unwanted area 
     gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
     ret,thresh = cv2.threshold(gray,0,255,cv2.THRESH_BINARY)
     image,contour,h = cv2.findContours(thresh,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
@@ -52,7 +52,7 @@ img1 = cv2.resize(img1, None, fx=0.5, fy=0.5, interpolation=cv2.INTER_CUBIC)
 hieght  = img1.shape[0] +50
 img3 = img1.copy()
 for i in range(1,noi):
-        img3 = required_img(img1)
+        img3 = required_img(img1) 
         img1 = img3 
         img2 = cv2.imread(str(i + 1) + '.jpeg')
         img2 = cv2.resize(img2, None, fx=0.5, fy=0.5, interpolation=cv2.INTER_CUBIC)
@@ -77,8 +77,6 @@ for i in range(1,noi):
         H = np.linalg.inv(H)
         img3 = cv2.warpPerspective(img2,H,(gray1.shape[1]+gray2.shape[1],hieght))
         img3[0:gray1.shape[0],0:gray1.shape[1]] = img1
-        if noi-1!=i:
-             img3 = required_img(img3)
        
 img3 = required_img(img3)
 cv2.imshow('warped_image',img3)
