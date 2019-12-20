@@ -3,33 +3,6 @@ import numpy as np
 import os
 import math
 #os.chdir('/home/saurabh/PANORAMA/3')
-def cylindricalWarpImage(img1, K):
-        f = K[0,0]
-        points = []
-        color = []
-        (im_h,im_w,channel) = img1.shape
-        cyl = np.zeros_like(img1)
-        cyl_mask = np.zeros_like(img1)
-        (cyl_h,cyl_w,channel) = cyl.shape
-        x_c = float(cyl_w) / 2.0
-        y_c = float(cyl_h) / 2.0
-        for x_cyl in np.arange(0,cyl_w):
-            for y_cyl in np.arange(0,cyl_h):
-                theta = (x_cyl - x_c) / f
-                h     = (y_cyl - y_c) / f
-                X = np.array([math.sin(theta), h, math.cos(theta)])
-                points.append(X)
-                color.append(img1[y_cyl,x_cyl])
-                X = np.dot(K,X)
-                x_im = X[0] #/ X[2]
-                if x_im < 0 or x_im >= im_w:
-                    continue
-                y_im = X[1] #/ X[2]
-                if y_im < 0 or y_im >= im_h:
-                    continue
-
-                cyl[int(y_cyl),int(x_cyl)] = img1[int(y_im),int(x_im)]
-        return cyl,points,color
 def arrange_points(points):
     number = np.array([a[0] for a in points])
     x_cen = 0
@@ -108,32 +81,7 @@ for i in range(1,noi):
         img3[0:gray1.shape[0],0:gray1.shape[1]] = img1
 
 img3 = required_img(img3)
-img3,points,color = cylindricalWarpImage(img3, k)
-color = np.array(color)
-points= np.array(points)
-x = points[:,0]
-y = points[:,1]
-z = points[:,2]
-b = color[:,0]
-g = color[:,1]
-r = color[:,2]
-print(x)
 cv2.imshow('warped_image',img3)
 cv2.imwrite('img.jpg',img3)
-import open3d as o3d
-xyz = np.zeros((np.size(x),6))
-xyz[:,0] = np.array(x)
-xyz[:,1] = np.array(y)
-xyz[:,2] = np.array(z)
-xyz[:,3] = np.array(r)
-xyz[:,4] = np.array(g)
-xyz[:,5] = np.array(b)
-# print(xyzrbg)
-pcd = o3d.geometry.PointCloud()
-pcd.points = o3d.utility.Vector3dVector(xyz[:,:3])
-pcd.colors = o3d.utility.Vector3dVector(xyz[:,3:])
-o3d.io.write_point_cloud('/home/saurabh/PANORAMA/data.ply',pcd)
-pcd_load = o3d.io.read_point_cloud('/home/saurabh/PANORAMA/data.ply')
-o3d.visualization.draw_geometries([pcd_load])
 cv2.waitKey(0)
 cv2.destroyAllWindows()
