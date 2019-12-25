@@ -1,68 +1,63 @@
 import cv2
 import numpy as np
-
-def arrange_points(points): # arrange the corner in specific order
-    number = np.array([a[0] for a in points])
-    x_cen = 0
-    y_cen = 0
-    for [x, y] in number:
-        x_cen = x_cen + x
-        y_cen = y_cen + y
-    x_cen = x_cen // 4
-    y_cen = y_cen // 4
-    sorted_x = np.array([[[0, 0]], [[0, 0]], [[0, 0]], [[0, 0]]])
-    for [x, y] in number:
-        if x <= x_cen and y <= y_cen:
-            sorted_x[0][0] = np.array([x, y])
-        if x <= x_cen and y >= y_cen:
-            sorted_x[1][0] = np.array([x, y])
-        if x >= x_cen and y >= y_cen:
-            sorted_x[2][0] = np.array([x, y])
-        if x >= x_cen and y <= y_cen:
-            sorted_x[3][0] = np.array([x, y])
-    points = np.array(sorted_x)
-    return  points
-
-def required_img(img): # this function  remove the unwanted area 
-    gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
-    ret,thresh = cv2.threshold(gray,0,255,cv2.THRESH_BINARY)
-    image,contour,h = cv2.findContours(thresh,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
-    try:
-        cnt =contour[0]
-        epsilon = 0.1*cv2.arcLength(cnt,True)
-        approx = cv2.approxPolyDP(cnt,epsilon,True)
-        approx = arrange_points(approx)
-        x, y, w, h = cv2.boundingRect(cnt)
-        pts1 = np.float32(approx)
-        pts2 = np.float32([[x,y],[x,y+h],[x+w,y+h],[x+w,y]])
-        M = cv2.getPerspectiveTransform(pts1,pts2)
-        img =cv2.warpPerspective(img,M,(x+w,y+h))
-        gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
-        ret,thresh = cv2.threshold(gray,0,255,cv2.THRESH_BINARY)
-        image,contour,h = cv2.findContours(thresh,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
-        cnt =contour[0]
-        x,y,w,h = cv2.boundingRect(cnt)
-        img = img[y:y+h-2,x:x+w-2]
-    except Exception:
-        return img
+import os
+import math
+def image_stiching(img1,img2):
+    gray1 = cv2.cvtColor(img1,cv2.COLOR_BGR2GRAY)
+    gray2 = cv2.cvtColor(img2,cv2.COLOR_BGR2GRAY)
+    flag = np.array((gray1,gray2))
+    print('flag.shape----------',flag.shape)
+    indx = np.argmax(flag,axis=0)
+    ind1 = np.where(indx ==0)
+    ind2 = np.where(indx==1)
+    img = np.zeros_like(img1)
+    img[ind1] = img1[ind1]
+    img[ind2] = img2[ind2]
     return  img
-noi = 5 # number of images
-img1 = cv2.imread(str(i) + '.jpeg')
+#---------------------------------------------------------------------------------------------------------------------------------------------
+def cylindrical_warp(img,K):
+    foc_len = (K[0][0] +K[1][1])/2
+    cylinder = np.zeros_like(img)
+    temp = np.mgrid[0:img.shape[1],0:img.shape[0]]
+    x,y = temp[0],temp[1]
+    cv2.imshow('img_function',img)
+    cv2.waitKey(0)
+    theta= (x- K[0][2])/foc_len # angle theta
+    h = (y-K[1][2])/foc_len # height
+    p = np.array([np.sin(theta),h,np.cos(theta)])
+    p = p.T
+    p = p.reshape(-1,3)
+    image_points = K.dot(p.T).T
+    points = image_points[:,:-1]/image_points[:,[-1]]
+    points = points.reshape(img.shape[0],img.shape[1],-1)
+    cylinder = cv2.remap(img, (points[:, :, 0]).astype(np.float32), (points[:, :, 1]).astype(np.float32), cv2.INTER_LINEAR)
+    return cylinder
+#----------------------------------------------------------------------------------------------------------------------------------------------
+noi = 4 # number of images to be stich
+img1 = cv2.imread('1.jpg')
 img1 = cv2.resize(img1, None, fx=0.5, fy=0.5, interpolation=cv2.INTER_CUBIC)
-hieght  = img1.shape[0] +50
+hieght  = img1.shape[0] + 200
 img3 = img1.copy()
+canvas = np.zeros((img1.shape[0],img1.shape[1],img1.shape[2]),np.uint8)
+print('img1.shape',img1.shape)
+print('canvas.shape------',canvas.shape)
+canvas[0:img1.shape[0],0:img1.shape[1]] = img1
+temp = np.zeros((200,img1.shape[1],3),np.uint8)
+print('temp.shape----',temp.shape)
+canvas =np.vstack((canvas,temp))
+cv2.imshow('can',canvas)
+cv2.waitKey(0)
 for i in range(1,noi):
-        img3 = required_img(img1) 
-        img1 = img3 
-        img2 = cv2.imread(str(i + 1) + '.jpeg')
+        img1 = img3
+        img2 = cv2.imread(str(i + 1) + '.jpg')
         img2 = cv2.resize(img2, None, fx=0.5, fy=0.5, interpolation=cv2.INTER_CUBIC)
-        gray1 = cv2.cvtColor(img1,cv2.COLOR_BGR2GRAY)# converting the image into grayscale 
+        gray1 = cv2.cvtColor(img1,cv2.COLOR_BGR2GRAY)
         gray2 = cv2.cvtColor(img2,cv2.COLOR_BGR2GRAY)
-        sift = cv2.xfeatures2d.SIFT_create() # create the sift object
-        kp1,desc1 = sift.detectAndCompute(gray1,None)# returns the keypoint and descriptors 
+        sift = cv2.xfeatures2d.SIFT_create()
+        kp1,desc1 = sift.detectAndCompute(gray1,None)
         kp2,desc2 = sift.detectAndCompute(gray2,None)
-        bf = cv2.BFMatcher(crossCheck=False)# create the Dmatch object 
-        matches = bf.knnMatch(desc1,desc2,k=2)# finds the match betweeen two images
+        bf = cv2.BFMatcher(crossCheck=False)
+        matches = bf.knnMatch(desc1,desc2,k=2)
         good = []
         pt1 = []
         pt2 = []
@@ -70,16 +65,26 @@ for i in range(1,noi):
             if m.distance < 0.7*n.distance:
                 good.append(m)
         good = sorted(good,key = lambda x:x.distance)
-        good = good[:15] # taking only the best 15 matches for finding the homography
-        pt1 = np.float32([kp1[m.queryIdx].pt for m in good]).reshape(-1,1,2) # query idx is index of pixel in stiching  image
-        pt2 = np.float32([kp2[m.trainIdx].pt for m in good]).reshape(-1,1,2) # train idx is index of pixel in reference image
-        H,mask = cv2.findHomography(pt1,pt2,cv2.RANSAC,ransacReprojThreshold=4.0) # homography
+        good = good[:15]
+        pt1 = np.float32([kp1[m.queryIdx].pt for m in good]).reshape(-1,1,2)
+        pt2 = np.float32([kp2[m.trainIdx].pt for m in good]).reshape(-1,1,2)
+        # M,mask = cv2.estimateAffine2D(pt1,pt2,cv2.RANSAC,ransacReprojThreshold=0.4)
+        # img3 = cv2.warpAffine(img2,M,(gray2.shape[1]+gray1.shape[1],hieght))
+        # cv2.imshow('img3',img3)
+        H,mask = cv2.findHomography(pt1,pt2,cv2.RANSAC,ransacReprojThreshold=4.0)
         H = np.linalg.inv(H)
-        img3 = cv2.warpPerspective(img2,H,(gray1.shape[1]+gray2.shape[1],hieght))
-        img3[0:gray1.shape[0],0:gray1.shape[1]] = img1
-       
-img3 = required_img(img3)
-cv2.imshow('warped_image',img3)
-cv2.imwrite('img.jpg',img3)
+        img3 = cv2.warpPerspective(img2,H,(gray2.shape[1]+gray1.shape[1],hieght))
+        print('img3.shape',img3.shape)
+        temp = np.zeros_like(img3)
+        col = img3.shape[1]-canvas.shape[1]
+        temp = cv2.resize(temp,(col,img3.shape[0]),interpolation = cv2.INTER_CUBIC)
+        print('shape',temp.shape,canvas.shape)
+        canvas = np.hstack((canvas,temp))
+        print(canvas.shape, img3.shape)
+        canvas = image_stiching(canvas,img3)
+        cv2.imshow('canvas',canvas)
+        cv2.waitKey(0)
+
+
 cv2.waitKey(0)
 cv2.destroyAllWindows()
