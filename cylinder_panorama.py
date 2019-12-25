@@ -2,6 +2,18 @@ import cv2
 import numpy as np
 import os
 #os.chdir('/home/saurabh/PANORAMA/3')
+def image_stiching(img1,img2):
+    gray1 = cv2.cvtColor(img1,cv2.COLOR_BGR2GRAY)
+    gray2 = cv2.cvtColor(img2,cv2.COLOR_BGR2GRAY)
+    flag = np.array((gray1,gray2))
+    print('flag.shape----------',flag.shape)
+    indx = np.argmax(flag,axis=0)
+    ind1 = np.where(indx ==0)
+    ind2 = np.where(indx==1)
+    img = np.zeros_like(img1)
+    img[ind1] = img1[ind1]
+    img[ind2] = img2[ind2]
+    return  img
 
 def cylinder_coordinates(img,K):
     foc_len = (K[0][0] +K[1][1])/2
@@ -25,15 +37,13 @@ img1 = cv2.resize(img1, None, fx=0.5, fy=0.5, interpolation=cv2.INTER_CUBIC)
 hieght  = img1.shape[0] + 50
 k = np.array([[583.61969059, 0, 327.46517597], [0, 582.90936082, 251.76312815], [0, 0, 1]])
 img3 = img1.copy()
-img1,A = cylindrical_warp(img1,k) 
-xyz.append(A)
+img1 = cylindrical_warp(img1,k) 
 
 for i in range(1,noi):
         img1 = img3
         img2 = cv2.imread(str(i + 1) + '.jpeg')
         img2 = cv2.resize(img2, None, fx=0.5, fy=0.5, interpolation=cv2.INTER_CUBIC)
-        img2,A = cylindrical_warp(img2,k)
-        xyz.append(A)
+        img2 = cylindrical_warp(img2,k)
         gray1 = cv2.cvtColor(img1,cv2.COLOR_BGR2GRAY)
         gray2 = cv2.cvtColor(img2,cv2.COLOR_BGR2GRAY)
         sift = cv2.xfeatures2d.SIFT_create()
@@ -59,11 +69,10 @@ for i in range(1,noi):
         col = img3.shape[1]-canvas.shape[1]
         temp = cv2.resize(temp,(col,img3.shape[0]),interpolation = cv2.INTER_CUBIC)
         canvas = np.hstack((canvas,temp))
-        canvas = pano(canvas,img3)
+        canvas = image_stiching(canvas,img3)
         cv2.imshow('canvas',canvas)
         cv2.waitKey(0)
 
-cv2.imshow('warped_image',img3)
-cv2.imwrite('img.jpg',img3)
+cv2.imwrite('Panorama.jpg',canvas)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
