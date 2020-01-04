@@ -96,9 +96,6 @@ for i in range(1,noi):
         M,mask = cv2.estimateAffine2D(pt2,pt1,cv2.RANSAC,ransacReprojThreshold=0.4)
         img3 = cv2.warpAffine(img2,M,(gray2.shape[1]+gray1.shape[1],hieght))
         cv2.imshow('img3',img3)
-        # H,mask = cv2.findHomography(pt1,pt2,cv2.RANSAC,ransacReprojThreshold=4.0)
-        # H = np.linalg.inv(H)
-        # img3 = cv2.warpPerspective(img2,H,(gray2.shape[1]+gray1.shape[1],hieght))
         temp = np.zeros_like(img3)
         col = img3.shape[1]-canvas.shape[1]
         temp = cv2.resize(temp,(col,img3.shape[0]),interpolation = cv2.INTER_CUBIC)
