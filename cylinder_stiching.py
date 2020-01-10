@@ -35,8 +35,7 @@ def cylindrical_warp(img,K):
     cylinder = np.zeros_like(img)
     temp = np.mgrid[0:img.shape[1],0:img.shape[0]]
     x,y = temp[0],temp[1]
-    color = img[y,x]
-   # print('img p=color',img[0,0])
+    # print('img p=color',img[0,0])
     theta= (x- K[0][2])/foc_len # angle theta
     h = (y-K[1][2])/foc_len # height
     p = np.array([np.sin(theta),h,np.cos(theta)])
@@ -46,14 +45,13 @@ def cylindrical_warp(img,K):
     points = image_points[:,:-1]/image_points[:,[-1]]
     points = points.reshape(img.shape[0],img.shape[1],-1)
     cylinder = cv2.remap(img, (points[:, :, 0]).astype(np.float32), (points[:, :, 1]).astype(np.float32), cv2.INTER_LINEAR)
-    return cylinder,p,color
+    return cylinder
 #----------------------------------------------------------------------------------------------------------------------------------------------
 noi = 4 # number of images to be stich
 img1 = cv2.imread('1.jpg')
 hieght  = img1.shape[0] + 200
 k = np.array([[583.61969059, 0, 327.46517597], [0, 582.90936082, 251.76312815], [0, 0, 1]])
 img3 = img1.copy()
-#canvas = np.zeros_like(img1)
 print(img3.shape)
 xyz = []
 bgr= []
@@ -61,21 +59,13 @@ canvas = np.zeros((img1.shape[0],img1.shape[1],img1.shape[2]),np.uint8)
 canvas[0:img1.shape[0],0:img1.shape[1]] = img1
 temp = np.zeros((200,img1.shape[1],3),np.uint8)
 canvas =np.vstack((canvas,temp))
-#cv2.imshow('can',canvas)
 print('-----------------------------------------------------------------------------------------------------------------------------------')
-img1,A,color = cylindrical_warp(img1,k)
-xyz.append(A)
-bgr.append(color)
+img1 = cylindrical_warp(img1,k)
 cv2.waitKey(0)
 for i in range(1,noi):
         img1 = img3
         img2 = cv2.imread(str(i + 1) + '.jpg')
-        #img2 = cv2.resize(img2, None, fx=0.5, fy=0.5, interpolation=cv2.INTER_CUBIC)
-        img2,A,color = cylindrical_warp(img2,k)
-        cv2.imshow('cylinder ',img2)
-        cv2.imshow('img2',img2)
-        xyz.append(A)
-        bgr.append(color)
+        img2 = cylindrical_warp(img2,k)
         gray1 = cv2.cvtColor(img1,cv2.COLOR_BGR2GRAY)
         gray2 = cv2.cvtColor(img2,cv2.COLOR_BGR2GRAY)
         sift = cv2.xfeatures2d.SIFT_create()
@@ -95,15 +85,12 @@ for i in range(1,noi):
         pt2 = np.float32([kp2[m.trainIdx].pt for m in good]).reshape(-1,1,2)
         M,mask = cv2.estimateAffine2D(pt2,pt1,cv2.RANSAC,ransacReprojThreshold=0.4)
         img3 = cv2.warpAffine(img2,M,(gray2.shape[1]+gray1.shape[1],hieght))
-        cv2.imshow('img3',img3)
         temp = np.zeros_like(img3)
         col = img3.shape[1]-canvas.shape[1]
         temp = cv2.resize(temp,(col,img3.shape[0]),interpolation = cv2.INTER_CUBIC)
-        print('temp,canvas',temp.shape,canvas.shape)
         canvas = np.hstack((canvas,temp))
         canvas = image_stiching(canvas,img3)
         canvas = required_img(canvas)
-        print(canvas.shape)
         cv2.imshow('canvas',canvas)
         hieght = canvas.shape[0]
         cv2.waitKey(0)
