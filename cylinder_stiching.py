@@ -34,7 +34,8 @@ def cylindrical_warp(img,K):
     cylinder = cv2.remap(img, (points[:, :, 0]).astype(np.float32), (points[:, :, 1]).astype(np.float32), cv2.INTER_LINEAR)
     return cylinder
 #----------------------------------------------------------------------------------------------------------------------------------------------
-img1 = cv2.imread('14.png')
+noi = 4200 # number of images
+img1 = cv2.imread('1.png')
 k = np.array([[951.15755604 ,0, 621.51429561], [0, 947.48375342, 349.79574375], [0, 0, 1]])
 img1 = cylindrical_warp(img1,k)
 h  = img1.shape[0] + 200
@@ -42,7 +43,7 @@ img3 = img1.copy()
 canvas = np.zeros((h,int(2*3.41*k[0][0]),img1.shape[2]),np.uint8)
 print('canvas shape',canvas.shape)
 canvas[0:img1.shape[0],0:img1.shape[1]] = img1
-for i in range(15,4247,5):
+for i in range(2,noi):
        # print('-------------'+str(i))
         img1 = img3.copy()
         name =  str(i) +'.png'
