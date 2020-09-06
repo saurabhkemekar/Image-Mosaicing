@@ -49,7 +49,7 @@ As for the canvas, the length of the canvas is equal to the circumference of the
 ## REAL - TIME IMPLEMENTATION
 The real - time implementation was performed by recording the video of our lab, where the camera was placed roughly at the centre of the room and rotated at a roughly uniformly angular velocity. The camera used was Intel RealSense Depth Module, using pyrealsense2 for recording the video and for camera calibration. The result for this can be seen below
 
-![image](https://user-images.githubusercontent.com/45517467/75627138-b6c89280-5bf3-11ea-8b23-8effd0af65b7.png)
+![image](https://github.com/saurabhkemekar/Image-Mosaicing/blob/master/result.jpg)
 
 ## TEAM MEMBERS
 
