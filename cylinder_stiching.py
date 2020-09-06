@@ -3,19 +3,11 @@ import cv2
 import numpy as np
 import os
 
-os.chdir("E:\images")
 
-def image_stiching(img1,img2):
-    gray1 = cv2.cvtColor(img1,cv2.COLOR_BGR2GRAY)
-    gray2 = cv2.cvtColor(img2,cv2.COLOR_BGR2GRAY)
-    flag = np.array((gray1,gray2))
-    indx = np.argmax(flag,axis=0)
-    ind1 = np.where(indx ==0)
-    ind2 = np.where(indx==1)
-    img = np.zeros_like(img1)
-    img[ind1] = img1[ind1]
-    img[ind2] = img2[ind2]
-    return  img
+def Image_stiching(img1,img2):
+      indx1 = np.where(img1 == 0)
+      img1[indx1] = img2[indx1]
+      return img1
 #---------------------------------------------------------------------------------------------------------------------------------------------
 def cylindrical_warp(img,K):
     foc_len = (K[0][0] +K[1][1])/2
@@ -76,7 +68,7 @@ for i in range(2,noi):
             M = np.array([[1,0,dist[0,0]],[0,1,dist[0,1]], [0.,0.,1.]])
             img3 = cv2.warpPerspective(img2,M,(canvas.shape[1],canvas.shape[0])) #, flags = cv2.INTER_LINEAR, borderMode = cv2.BORDER_TRANSPARENT)
             print(img3.shape)
-            canvas = image_stiching(canvas,img3)
+            canvas = Image_stiching(canvas,img3)
             cv2.imwrite('image3.jpg',canvas)
             cv2.waitKey(1)
 cv2.destroyAllWindows()
